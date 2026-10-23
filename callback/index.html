@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization Callback &ndash; QBO/Salesforce Integration</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; background: #f6f7f9; color: #1b1f24;
+         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+  .sub { color: #5b636e; margin: 0 0 1.75rem; }
+  .field { background: #fff; border: 1px solid #e4e7eb; border-radius: 10px;
+           padding: 14px 16px; margin-bottom: 14px; }
+  .label { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase;
+           color: #8a919b; margin-bottom: 6px; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  code { font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: #f1f3f5; border-radius: 6px; padding: 8px 10px; flex: 1;
+         overflow-wrap: anywhere; }
+  button { border: 1px solid #d4d8dd; background: #fff; border-radius: 7px;
+           padding: 8px 12px; cursor: pointer; font-size: .85rem; white-space: nowrap; }
+  button:active { background: #eef1f4; }
+  .err { background: #fff2f0; border-color: #ffccc7; color: #a8071a; }
+  .none { color: #8a919b; font-style: italic; }
+  .note { color: #5b636e; font-size: .9rem; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Authorization received</h1>
+    <p class="sub">Copy each value below into the terminal running
+    <code style="padding:2px 6px;flex:none">qbo_authorize.py</code>, then close this tab.</p>
+    <div id="out"></div>
+    <p class="note">These values authorize access to your own QuickBooks company. The
+    authorization code is single-use and expires within minutes. If you did not start
+    this authorization, close this tab and do nothing.</p>
+  </div>
+<script>
+  (function () {
+    var p = new URLSearchParams(window.location.search);
+    var out = document.getElementById("out");
+
+    function field(label, value) {
+      var wrap = document.createElement("div");
+      wrap.className = "field";
+      var lab = document.createElement("div");
+      lab.className = "label";
+      lab.textContent = label;
+      wrap.appendChild(lab);
+      if (!value) {
+        var none = document.createElement("div");
+        none.className = "none";
+        none.textContent = "(not present)";
+        wrap.appendChild(none);
+        out.appendChild(wrap);
+        return;
+      }
+      var row = document.createElement("div");
+      row.className = "row";
+      var c = document.createElement("code");
+      c.textContent = value;
+      var btn = document.createElement("button");
+      btn.textContent = "Copy";
+      btn.addEventListener("click", function () {
+        navigator.clipboard.writeText(value).then(function () {
+          btn.textContent = "Copied";
+          setTimeout(function () { btn.textContent = "Copy"; }, 1200);
+        });
+      });
+      row.appendChild(c);
+      row.appendChild(btn);
+      wrap.appendChild(row);
+      out.appendChild(wrap);
+    }
+
+    var error = p.get("error");
+    if (error) {
+      var e = document.createElement("div");
+      e.className = "field err";
+      e.textContent = "Authorization failed: " + error +
+        (p.get("error_description") ? " — " + p.get("error_description") : "");
+      out.appendChild(e);
+      return;
+    }
+
+    field("code", p.get("code"));
+    field("realmId", p.get("realmId"));
+    field("state", p.get("state"));
+  })();
+</script>
+</body>
+</html>
